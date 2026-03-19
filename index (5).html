@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>B-15 | Comparador Inteligente</title>
+    <link href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Orbitron:wght@400;700;900&family=Inter:wght@300;400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #00f5c4;
+            --accent: #ff6b35;
+            --bg: #060910;
+            --surface: #0d1117;
+            --border: #21262d;
+            --text: #e6edf3;
+            --muted: #7d8590;
+        }
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Inter', sans-serif; background-color: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; position: relative; }
+        body::before { content: ''; position: fixed; inset: 0; background-image: linear-gradient(rgba(0, 245, 196, 0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(0, 245, 196, 0.03) 1px, transparent 1px); background-size: 50px 50px; pointer-events: none; z-index: 0; }
+        body::after { content: ''; position: fixed; top: -200px; left: 50%; transform: translateX(-50%); width: 600px; height: 400px; background: radial-gradient(ellipse, rgba(0, 245, 196, 0.08) 0%, transparent 70%); pointer-events: none; z-index: 0; }
+        .container { position: relative; z-index: 1; max-width: 800px; margin: 0 auto; padding: 60px 20px 80px; display: flex; flex-direction: column; align-items: center; }
+        .badge { font-family: 'Share Tech Mono', monospace; font-size: 0.7rem; color: var(--primary); letter-spacing: 0.3em; text-transform: uppercase; border: 1px solid rgba(0, 245, 196, 0.3); padding: 4px 14px; border-radius: 2px; margin-bottom: 24px; animation: fadeIn 0.6s ease forwards; }
+        .logo { font-family: 'Orbitron', monospace; font-size: clamp(3rem, 10vw, 6rem); font-weight: 900; color: var(--text); letter-spacing: -0.02em; line-height: 1; margin-bottom: 8px; animation: fadeIn 0.8s ease forwards; }
+        .logo span { color: var(--primary); text-shadow: 0 0 30px rgba(0, 245, 196, 0.5); }
+        .tagline { font-family: 'Share Tech Mono', monospace; font-size: 0.85rem; color: var(--muted); letter-spacing: 0.1em; margin-bottom: 56px; animation: fadeIn 1s ease forwards; }
+        .search-wrapper { width: 100%; position: relative; animation: fadeIn 1.2s ease forwards; }
+        .search-wrapper::before { content: '>'; font-family: 'Share Tech Mono', monospace; position: absolute; left: 20px; top: 50%; transform: translateY(-50%); color: var(--primary); font-size: 1rem; pointer-events: none; z-index: 1; }
+        input { width: 100%; padding: 18px 20px 18px 44px; font-family: 'Share Tech Mono', monospace; font-size: 0.95rem; background: var(--surface); border: 1px solid var(--border); border-radius: 4px; color: var(--text); outline: none; transition: all 0.3s ease; }
+        input::placeholder { color: var(--muted); }
+        input:focus { border-color: var(--primary); box-shadow: 0 0 0 3px rgba(0, 245, 196, 0.08); }
+        button { margin-top: 12px; width: 100%; padding: 16px; font-family: 'Orbitron', monospace; font-size: 0.8rem; font-weight: 700; letter-spacing: 0.2em; text-transform: uppercase; background: transparent; color: var(--primary); border: 1px solid var(--primary); border-radius: 4px; cursor: pointer; transition: all 0.3s ease; position: relative; overflow: hidden; }
+        button::before { content: ''; position: absolute; inset: 0; background: var(--primary); transform: scaleX(0); transform-origin: left; transition: transform 0.3s ease; z-index: -1; }
+        button:hover { color: var(--bg); }
+        button:hover::before { transform: scaleX(1); }
+        #resultado { width: 100%; margin-top: 40px; animation: fadeIn 0.5s ease; }
+        .produto-card { background: var(--surface); border: 1px solid var(--border); border-radius: 6px; padding: 28px; position: relative; overflow: hidden; }
+        .produto-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--primary), transparent); }
+        .produto-tag { font-family: 'Share Tech Mono', monospace; font-size: 0.65rem; color: var(--primary); letter-spacing: 0.3em; text-transform: uppercase; margin-bottom: 12px; display: block; }
+        .produto-nome { font-family: 'Orbitron', monospace; font-size: 1.3rem; font-weight: 700; color: var(--text); margin-bottom: 12px; line-height: 1.3; }
+        .produto-desc { font-size: 0.9rem; color: var(--muted); line-height: 1.6; margin-bottom: 20px; }
+        .produto-footer { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+        .produto-preco { font-family: 'Orbitron', monospace; font-size: 1.6rem; font-weight: 700; color: var(--primary); }
+        .produto-link { display: inline-flex; align-items: center; gap: 8px; padding: 12px 24px; background: var(--accent); color: white; text-decoration: none; font-family: 'Orbitron', monospace; font-size: 0.7rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; border-radius: 4px; transition: all 0.3s ease; }
+        .produto-link:hover { background: #ff8555; transform: translateY(-1px); box-shadow: 0 8px 20px rgba(255, 107, 53, 0.3); }
+        .nao-encontrado { font-family: 'Share Tech Mono', monospace; color: var(--muted); font-size: 0.85rem; text-align: center; padding: 32px; border: 1px dashed var(--border); border-radius: 4px; }
+        .nao-encontrado span { color: var(--accent); }
+        .footer { margin-top: 80px; font-family: 'Share Tech Mono', monospace; font-size: 0.65rem; color: var(--border); letter-spacing: 0.2em; text-transform: uppercase; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .scanline { position: fixed; top: 0; left: 0; right: 0; height: 2px; background: rgba(0, 245, 196, 0.05); animation: scan 8s linear infinite; pointer-events: none; z-index: 999; }
+        @keyframes scan { 0% { top: 0; } 100% { top: 100vh; } }
+    </style>
+</head>
+<body>
+    <div class="scanline"></div>
+    <div class="container">
+        <div class="badge">Sistema de Comparação v1.0</div>
+        <h1 class="logo">B<span>-</span>15</h1>
+        <p class="tagline">// descreva o produto. a gente encontra o melhor.</p>
+        <div class="search-wrapper">
+            <input type="text" id="busca" placeholder="ex: tv com bluetooth, fone para academia, notebook para estudar..." onkeydown="if(event.key==='Enter') buscar()"/>
+            <button onclick="buscar()">Iniciar Busca</button>
+        </div>
+        <div id="resultado"></div>
+        <div class="footer">B-15 © 2026 — Todos os direitos reservados</div>
+    </div>
+    <script>
+        const produtos = [
+            {
+                palavras: ["tv", "televisão", "smart tv", "televisor", "tv bluetooth", "tv 32", "tv sala", "tv quarto", "philco"],
+                nome: "Smart TV 32\" Philco Roku TV",
+                descricao: "Escolha da Amazon. 32\", LED, Dolby Audio, Roku TV com +100mil filmes e séries. 4.6★ com 1.003 avaliações.",
+                preco: "R$878,10",
+                link: "https://www.amazon.com.br/Smart-Philco-PTV32K34RKGB-Dolby-Audio/dp/B0D9ZMKMB6?tag=b150d-20"
+            },
+            {
+                palavras: ["fone jbl", "jbl", "fone over ear", "headphone", "fone bluetooth", "fone sem fio", "fone grande"],
+                nome: "JBL Tune 520BT",
+                descricao: "Escolha da Amazon. On-ear, Bluetooth, sem fio. 4.8★ com 25 mil avaliações. Som Pure Bass, dobrável, leve.",
+                preco: "R$201,71",
+                link: "https://www.amazon.com.br/JBL-Fone-Ouvido-Tune-520BT/dp/B0C4CCMNQT?tag=b150d-20"
+            },
+            {
+                palavras: ["fone intra", "fone pequeno", "fone tws", "earbuds", "soundcore", "fone discreto", "fone compacto", "fone academia", "cancelamento de ruido", "cancelamento de ruído", "fone"],
+                nome: "Soundcore P20i da Anker",
+                descricao: "Escolha da Amazon. Bluetooth 5.3, 30h de bateria, resistente à água, 2 microfones IA. 4.7★ com 97 mil avaliações.",
+                preco: "R$157,84",
+                link: "https://www.amazon.com.br/soundcore-Bluetooth-Resistência-Microfones-Personalizável/dp/B0BTYDLTM3?tag=b150d-20"
+            },
+            {
+                palavras: ["mouse", "mouse sem fio", "mouse logitech", "mouse compacto", "mouse barato", "mouse escritorio"],
+                nome: "Mouse Logitech M170",
+                descricao: "Sem fio, ambidestro, compacto. 4.8★ com mais de 67 mil avaliações. Conexão USB, pilha inclusa. Escolha da Amazon.",
+                preco: "R$59,99",
+                link: "https://www.amazon.com.br/Logitech-Ambidestro-Compacto-Conexão-Inclusa/dp/B01K92Z3OQ?tag=b150d-20"
+            },
+            {
+                palavras: ["smartwatch", "relógio inteligente", "relógio samsung", "galaxy fit", "smartwatch samsung", "relogio", "relógio"],
+                nome: "Samsung Galaxy Fit3",
+                descricao: "1º mais vendido em smartwatches. Display 1.6\", bateria 3000mAh, Bluetooth e Wi-Fi. 4.7★ com mais de 9 mil avaliações.",
+                preco: "R$324,57",
+                link: "https://www.amazon.com.br/Smartwatch-Samsung-Galaxy-Display-Grafite/dp/B0CVCLGV1W?tag=b150d-20"
+            },
+            {
+                palavras: ["kindle", "leitor", "ebook", "livro digital", "leitor digital", "leitura"],
+                nome: "Kindle 16GB",
+                descricao: "1º mais vendido em dispositivos Amazon. Tela 6\", luz frontal ajustável, bateria de longa duração. 4.8★ com 23 mil avaliações.",
+                preco: "R$649,00",
+                link: "https://www.amazon.com.br/kindle-16gb-verde/dp/B0CP31QS6R?tag=b150d-20"
+            },
+            {
+                palavras: ["powerbank", "carregador portátil", "bateria portátil", "carregador celular", "power bank", "carregador viagem"],
+                nome: "i2GO PRO Power Bank 20000mAh",
+                descricao: "Escolha da Amazon. 20000mAh, Power Delivery 20W, USB-C. 4.7★ com 10 mil avaliações. Carrega até 4x um celular.",
+                preco: "R$169,90",
+                link: "https://www.amazon.com.br/Carregador-Portátil-20000mAh-Delivery-I2GO/dp/B094YR4SLJ?tag=b150d-20"
+            },
+            {
+                palavras: ["tablet", "tablet samsung", "galaxy tab", "tablet estudo", "tablet desenho", "tablet criança"],
+                nome: "Samsung Galaxy Tab S10 Lite",
+                descricao: "Escolha da Amazon. Tela 10.9\", 128GB, com S Pen inclusa. 4.8★ com 1.248 avaliações. Ideal para estudo e trabalho.",
+                preco: "R$2.287,00",
+                link: "https://www.amazon.com.br/Galaxy-Lite-128GB-Tela-Cinza/dp/B0FMFRFNWG?tag=b150d-20"
+            },
+            {
+                palavras: ["notebook", "laptop", "computador", "notebook dell", "notebook i5", "notebook trabalho", "notebook estudo"],
+                nome: "Notebook Dell Inspiron 15",
+                descricao: "Escolha da Amazon. Intel Core i5 13ª Gen, 8GB RAM, SSD 512GB, tela 15.6\" Full HD, Windows 11. 4.6★ com 1.020 avaliações.",
+                preco: "R$3.845,04",
+                link: "https://www.amazon.com.br/Notebook-Dell-Inspiron-I15-I1300-A30P-Carbono/dp/B0FHCHBRGF?tag=b150d-20"
+            },
+            {
+                palavras: ["celular", "smartphone", "samsung", "galaxy", "celular samsung", "galaxy a36", "celular 5g", "celular câmera", "celular foto"],
+                nome: "Samsung Galaxy A36 5G",
+                descricao: "Escolha da Amazon. 128GB, 6GB RAM, câmera 50MP, tela Super AMOLED 6.7\", 5G, recursos de IA. 4.8★ com 1.393 avaliações.",
+                preco: "R$2.227,42",
+                link: "https://www.amazon.com.br/Celular-Samsung-Galaxy-Câmera-Recursos/dp/B0DYVQW78L?tag=b150d-20"
+            }
+        ];
+
+        function buscar() {
+            const texto = document.getElementById('busca').value.toLowerCase().trim();
+            const resultado = document.getElementById('resultado');
+            if (!texto) {
+                resultado.innerHTML = '<div class="nao-encontrado"><span>></span> aguardando input do usuário...</div>';
+                return;
+            }
+            const encontrado = produtos.find(p => p.palavras.some(palavra => texto.includes(palavra)));
+            if (encontrado) {
+                resultado.innerHTML = '<div class="produto-card"><span class="produto-tag">// recomendação encontrada</span><div class="produto-nome">' + encontrado.nome + '</div><div class="produto-desc">' + encontrado.descricao + '</div><div class="produto-footer"><div class="produto-preco">' + encontrado.preco + '</div><a class="produto-link" href="' + encontrado.link + '" target="_blank">Ver na Amazon →</a></div></div>';
+            } else {
+                resultado.innerHTML = '<div class="nao-encontrado"><span>></span> produto não encontrado. tente outras palavras.</div>';
+            }
+        }
+    </script>
+</body>
+</html>
